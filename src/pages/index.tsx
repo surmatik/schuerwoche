@@ -1,115 +1,159 @@
+// pages/index.tsx
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Client, Databases, ID } from "appwrite";
+import CeviLogo from "../../public/cevi-logo.png";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+const days = ["6. Juli", "7. Juli", "8. Juli", "9. Juli", "10. Juli", "11. Juli", "12. Juli"];
+const options = ["Abendprogramm", "Schlafen"];
+const foodOptions = ["Fleisch", "Vegi"];
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const client = new Client()
+  .setEndpoint("https://cloud.appwrite.io/v1")
+  .setProject("6851b3080024374d0ade");
+
+const databases = new Databases(client);
+const databaseId = "6851b31000348b1557df";
+const collectionId = "6851b3c1002759f58afe";
 
 export default function Home() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [formData, setFormData] = useState({});
+  const [essen, setEssen] = useState("");
+  const router = useRouter();
+
+  const handleChange = (day: string, option: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [day]: {
+        ...(prev as any)[day],
+        [option]: !(prev as any)?.[day]?.[option],
+      },
+    }));
+  };
+
+  const handleSubmit = async () => {
+    if (!name.trim()) return alert("Bitte Namen eingeben.");
+
+    try {
+      await databases.createDocument(databaseId, collectionId, ID.unique(), {
+        name,
+        email,
+        essen,
+        antworten: JSON.stringify(formData),
+      });
+      router.push("/auswertung");
+    } catch (err) {
+      console.error("Appwrite Fehler:", err);
+      alert("Fehler beim Speichern. Bitte später erneut versuchen.");
+    }
+  };
+
   return (
-    <div
-      className={`${geistSans.className} ${geistMono.className} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
-    >
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/pages/index.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+    <div className="min-h-screen bg-gradient-to-br from-[#fefefe] to-[#f2f2f2] font-['Segoe UI','Helvetica Neue',sans-serif]">
+      <header className="flex items-center justify-center p-6">
+        <div className="max-w-7xl mx-auto flex items-center gap-4">
+          <Image src={CeviLogo} alt="Cevi Logo" width={40} height={40} />
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Schüürwuche 2025</h1>
+        </div>
+      </header>
+
+      <main className="flex items-center justify-center p-6">
+        <div className="w-full max-w-4xl bg-white text-black rounded-2xl shadow-xl p-8 border border-gray-200">
+          <div className="mb-6">
+            <label className="block font-medium text-gray-700 mb-1">
+              Name <span className="text-red-600">*</span>
+            </label>
+            <input
+              type="text"
+              placeholder="Dein Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="border rounded-lg p-3 w-full focus:outline-none focus:ring-2 focus:ring-[#b10030]"
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </div>
+
+          <div className="mb-6">
+            <label className="block font-medium text-gray-700 mb-1">Email</label>
+            <input
+              type="email"
+              placeholder="deinemail@cevi-wetzikon.ch"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="border rounded-lg p-3 w-full focus:outline-none focus:ring-2 focus:ring-[#b10030]"
+            />
+          </div>
+
+          <h2 className="text-2xl font-semibold text-gray-800 mt-10 mb-3">Wann bist du dabei?</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full border text-sm text-center">
+              <thead className="bg-gray-100 text-gray-700">
+                <tr>
+                  <th className="border p-2">Datum</th>
+                  {options.map((opt) => (
+                    <th key={opt} className="border p-2">{opt}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {days.map((day) => (
+                  <tr key={day} className="hover:bg-gray-50">
+                    <td className="border p-2 text-left font-medium">{day}</td>
+                    {options.map((opt) => (
+                      <td className="border p-2" key={opt}>
+                        <input
+                          type="checkbox"
+                          checked={!!(formData as any)?.[day]?.[opt]}
+                          onChange={() => handleChange(day, opt)}
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <h2 className="text-2xl font-semibold text-gray-800 mt-10 mb-3">Was isst du?</h2>
+          <table className="w-full border mb-6 text-sm text-center">
+            <thead className="bg-gray-100 text-gray-700">
+              <tr>
+                <th className="border p-2"></th>
+                {foodOptions.map((opt) => (
+                  <th key={opt} className="border p-2">{opt}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="hover:bg-gray-50">
+                <td className="border p-2 font-medium text-left">Essen</td>
+                {foodOptions.map((opt) => (
+                  <td key={opt} className="border p-2">
+                    <input
+                      type="radio"
+                      name="essen"
+                      value={opt}
+                      checked={essen === opt}
+                      onChange={(e) => setEssen(e.target.value)}
+                    />
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+
+          <button
+            onClick={handleSubmit}
+            className="mt-4 w-full bg-[#b10030] hover:bg-[#970029] text-white font-semibold py-3 px-4 rounded-lg text-lg shadow"
           >
-            Read our docs
-          </a>
+            Senden
+          </button>
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }
